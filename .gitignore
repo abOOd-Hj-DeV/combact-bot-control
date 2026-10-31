@@ -1,0 +1,25 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+app/build/
+pubspec.lock  # app — regenerate with `flutter pub get`
+
+# Android
+*.iml
+.gradle/
+local.properties
+.idea/
+.cxx/
+
+# Misc
+.DS_Store
+*.bin
+!firmware/test/*.bin
