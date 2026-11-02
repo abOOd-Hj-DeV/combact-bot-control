@@ -21,43 +21,51 @@
 #define TELEMETRY_PERIOD_MS   200       // robot -> phone, 5 Hz
 #define WDT_TIMEOUT_S         3
 
-// ---------------- Drive motor driver ----------------
-// Pick ONE driver type for the two drive motors.
-#define DRIVER_L298N     1   // IN1/IN2 + ENA(PWM) per motor
-#define DRIVER_BTS7960   2   // RPWM/LPWM per motor (+EN pins)
-#define DRIVE_DRIVER     DRIVER_L298N
+// ---------------- Motor driver ----------------
+// Target hardware: a generic 4-channel brushed-DC driver board
+// (IN1/IN2 per channel, optional EN per channel). We drive every motor
+// in "two PWM inputs" mode: PWM on IN1 = forward, PWM on IN2 = reverse,
+// both low = coast. This works for L9110S / DRV8833 / TB6612 style boards
+// (no EN pin -> leave the EN GPIO unconnected) and for L298N-style boards
+// (EN is held HIGH by the firmware, or jumper it to 5V).
+// Channels used: CH1 = left wheel, CH2 = right wheel, CH3 = hammer, CH4 spare.
+// All pins below are plain output-capable GPIOs: no boot-strapping pins
+// (0/2/12/15), no flash pins (6-11), no input-only pins (34-39).
+#define DRIVER_L298N     1   // IN1/IN2 + ENA(PWM) per motor (legacy mapping)
+#define DRIVER_BTS7960   2   // two PWM inputs per motor (+ optional EN pins)
+#define DRIVE_DRIVER     DRIVER_BTS7960
 
-// Left motor (L298N mapping)
-#define PIN_LEFT_IN1     26
-#define PIN_LEFT_IN2     27
-#define PIN_LEFT_ENA     25   // PWM
-// Right motor (L298N mapping)
-#define PIN_RIGHT_IN3    14
-#define PIN_RIGHT_IN4    12
-#define PIN_RIGHT_ENB    33   // PWM
+// Driver CH1 — left wheel
+#define PIN_LEFT_RPWM    25   // -> CH1 IN1 (forward)
+#define PIN_LEFT_LPWM    26   // -> CH1 IN2 (reverse)
+#define PIN_LEFT_REN     27   // -> CH1 EN  (if the board has one; else unused)
+#define PIN_LEFT_LEN     -1
+// Driver CH2 — right wheel
+#define PIN_RIGHT_RPWM   32   // -> CH2 IN1 (forward)
+#define PIN_RIGHT_LPWM   33   // -> CH2 IN2 (reverse)
+#define PIN_RIGHT_REN    14   // -> CH2 EN  (if the board has one; else unused)
+#define PIN_RIGHT_LEN    -1
 
-// BTS7960 mapping (used only if DRIVE_DRIVER == DRIVER_BTS7960)
-#define PIN_LEFT_RPWM    25
-#define PIN_LEFT_LPWM    26
-#define PIN_LEFT_REN     27
-#define PIN_LEFT_LEN     14
-#define PIN_RIGHT_RPWM   33
-#define PIN_RIGHT_LPWM   12
-#define PIN_RIGHT_REN    13
-#define PIN_RIGHT_LEN    32
+// Legacy L298N mapping (used only if DRIVE_DRIVER == DRIVER_L298N)
+#define PIN_LEFT_IN1     25
+#define PIN_LEFT_IN2     26
+#define PIN_LEFT_ENA     27   // PWM
+#define PIN_RIGHT_IN3    32
+#define PIN_RIGHT_IN4    33
+#define PIN_RIGHT_ENB    14   // PWM
 
 // PWM settings for drive motors
 #define DRIVE_PWM_FREQ   20000    // 20 kHz — above audible range
 #define DRIVE_PWM_BITS   10       // 0..1023
 
-// ---------------- Weapon (hammer) motor ----------------
-// Any single-channel H-bridge. RPWM swings one way, LPWM the other.
+// ---------------- Weapon (hammer) motor — driver CH3 ----------------
+// Same two-PWM-inputs scheme as the wheels.
 // Set WEAPON_SINGLE_DIRECTION to 1 if the hammer only needs one direction.
 #define WEAPON_SINGLE_DIRECTION  0
-#define PIN_WEAPON_RPWM   18
-#define PIN_WEAPON_LPWM   19
-#define PIN_WEAPON_REN    5    // set to -1 if enable pins are hard-wired high
-#define PIN_WEAPON_LEN    17
+#define PIN_WEAPON_RPWM   18   // -> CH3 IN1 (forward / strike)
+#define PIN_WEAPON_LPWM   19   // -> CH3 IN2 (reverse / retract)
+#define PIN_WEAPON_REN    23   // -> CH3 EN  (if the board has one; else unused)
+#define PIN_WEAPON_LEN    -1
 #define WEAPON_PWM_FREQ   20000
 #define WEAPON_PWM_BITS   10
 
