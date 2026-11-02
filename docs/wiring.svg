@@ -59,7 +59,7 @@
     <text x="770" y="250" text-anchor="end">OUT1 / OUT2</text>
     <text x="770" y="340" text-anchor="end">OUT1 / OUT2</text>
     <text x="770" y="430" text-anchor="end">OUT1 / OUT2</text>
-    <text x="770" y="600" text-anchor="end">VM (+)   GND (−)</text>
+    <text x="600" y="572" text-anchor="middle" font-size="12">VM (+)</text><text x="700" y="572" text-anchor="middle" font-size="12">GND (−)</text>
   </g>
 
   <!-- Signal wires ESP32 -> driver -->
