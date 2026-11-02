@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import 'drive_page.dart';
 import 'link.dart';
+import 'theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,6 +12,7 @@ void main() {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const CombatControllerApp());
 }
 
@@ -22,7 +24,7 @@ class CombatControllerApp extends StatelessWidget {
     return MaterialApp(
       title: 'Combact Controller',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(useMaterial3: true),
+      theme: combatTheme(),
       home: DrivePage(link: RobotLink()),
     );
   }
