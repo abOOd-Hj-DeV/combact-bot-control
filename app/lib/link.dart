@@ -71,6 +71,17 @@ class RobotLink {
     _sending = false;
   }
 
+  /// Drop the current socket and open a fresh one. Needed after the phone
+  /// leaves and rejoins the robot's Wi-Fi: the old socket stays bound to the
+  /// dead network and silently sends nothing.
+  Future<void> reconnect() async {
+    _socket?.close();
+    _socket = null;
+    telemetry = null;
+    _socket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
+    _socket!.listen(_onData);
+  }
+
   Future<void> stop() async {
     await stopSending();
     _txTimer?.cancel();

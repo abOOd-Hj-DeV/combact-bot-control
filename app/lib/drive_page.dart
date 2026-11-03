@@ -35,8 +35,12 @@ class _DrivePageState extends State<DrivePage> {
   @override
   void initState() {
     super.initState();
-    _bindWifi();
-    widget.link.start().then((_) => widget.link.beginSending());
+    // Bind to the robot's WiFi *before* opening the socket: Android keeps
+    // mobile data as the default network, and bindProcessToNetwork only
+    // affects sockets created after it.
+    _bindWifi()
+        .then((_) => widget.link.start())
+        .then((_) => widget.link.beginSending());
     _sub = widget.link.telemetryStream.listen((t) {
       setState(() {
         _tele = t;
@@ -44,8 +48,33 @@ class _DrivePageState extends State<DrivePage> {
       });
     });
     _staleTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
-      if (mounted && _tele != null) setState(() {});
+      if (!mounted) return;
+      if (_tele != null) setState(() {});
+      _maybeRelink();
     });
+  }
+
+  static const _relinkAfter = Duration(milliseconds: 2500);
+  DateTime _lastRelink = DateTime.now();
+  bool _relinking = false;
+
+  /// No telemetry for a while: the phone probably dropped and rejoined the
+  /// robot's Wi-Fi, which leaves the UDP socket bound to a dead network.
+  /// Re-bind the process to Wi-Fi and open a fresh socket, every 2.5 s.
+  Future<void> _maybeRelink() async {
+    if (_relinking || !_stale) return;
+    if (DateTime.now().difference(_lastRelink) < _relinkAfter) return;
+    _relinking = true;
+    _lastRelink = DateTime.now();
+    try {
+      await _bindWifi();
+      await widget.link.reconnect();
+    } catch (_) {
+      // Socket bind can fail while the interface is still coming up; the
+      // next tick retries.
+    } finally {
+      _relinking = false;
+    }
   }
 
   /// Route all app traffic over WiFi even though the robot's AP has no

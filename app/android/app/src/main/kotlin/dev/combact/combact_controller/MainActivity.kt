@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
+import android.os.Handler
+import android.os.Looper
 import android.view.WindowManager
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -24,7 +26,7 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "bindWifi" -> { bindWifi(); result.success(bound) }
+                    "bindWifi" -> bindWifi(result)
                     "unbind" -> { unbind(); result.success(true) }
                     else -> result.notImplemented()
                 }
@@ -34,16 +36,21 @@ class MainActivity : FlutterActivity() {
     /// The robot's AP has no internet, so Android prefers mobile data and
     /// drops our UDP. requestNetwork + bindProcessToNetwork forces all app
     /// sockets onto the WiFi interface.
-    private fun bindWifi() {
-        val mgr = cm ?: return
-        if (bound) return
+    private fun bindWifi(result: MethodChannel.Result) {
+        val mgr = cm ?: run { result.success(false); return }
+        if (bound) { result.success(true); return }
+        wifiCallback?.let { runCatching { mgr.unregisterNetworkCallback(it) } }
+        wifiCallback = null
         val req = NetworkRequest.Builder()
             .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
             .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
             .build()
+        val main = Handler(Looper.getMainLooper())
+        var replied = false
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: android.net.Network) {
                 bound = mgr.bindProcessToNetwork(network)
+                main.post { if (!replied) { replied = true; result.success(bound) } }
             }
             override fun onLost(network: android.net.Network) {
                 bound = false
@@ -51,6 +58,8 @@ class MainActivity : FlutterActivity() {
         }
         wifiCallback = cb
         mgr.requestNetwork(req, cb)
+        // Don't hang the UI forever if WiFi never shows up.
+        main.postDelayed({ if (!replied) { replied = true; result.success(false) } }, 4000)
     }
 
     private fun unbind() {
