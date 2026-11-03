@@ -17,6 +17,28 @@
 #include "motor_driver.h"
 
 // ---------------- Drivers ----------------
+#if DRIVE_DRIVER == DRIVER_SHIELD
+#define SHIELD_PWM_PIN_(n) SHIELD_PIN_PWM_M##n
+#define SHIELD_PWM_PIN(n)  SHIELD_PWM_PIN_(n)
+#define SHIELD_BIT_A_(n)   SHIELD_M##n##_A
+#define SHIELD_BIT_A(n)    SHIELD_BIT_A_(n)
+#define SHIELD_BIT_B_(n)   SHIELD_M##n##_B
+#define SHIELD_BIT_B(n)    SHIELD_BIT_B_(n)
+static ShieldRegister shieldReg(SHIELD_PIN_DIR_SER, SHIELD_PIN_DIR_CLK,
+                                SHIELD_PIN_DIR_LATCH, SHIELD_PIN_DIR_EN);
+static ShieldMotor driveLeft (shieldReg, SHIELD_BIT_A(SHIELD_LEFT_MOTOR),
+                              SHIELD_BIT_B(SHIELD_LEFT_MOTOR),
+                              SHIELD_PWM_PIN(SHIELD_LEFT_MOTOR),
+                              0, SHIELD_PWM_FREQ, DRIVE_PWM_BITS);
+static ShieldMotor driveRight(shieldReg, SHIELD_BIT_A(SHIELD_RIGHT_MOTOR),
+                              SHIELD_BIT_B(SHIELD_RIGHT_MOTOR),
+                              SHIELD_PWM_PIN(SHIELD_RIGHT_MOTOR),
+                              1, SHIELD_PWM_FREQ, DRIVE_PWM_BITS);
+static ShieldMotor weapon    (shieldReg, SHIELD_BIT_A(SHIELD_WEAPON_MOTOR),
+                              SHIELD_BIT_B(SHIELD_WEAPON_MOTOR),
+                              SHIELD_PWM_PIN(SHIELD_WEAPON_MOTOR),
+                              2, SHIELD_PWM_FREQ, WEAPON_PWM_BITS);
+#else
 #if DRIVE_DRIVER == DRIVER_BTS7960
 static BTS7960Driver driveLeft (PIN_LEFT_RPWM,  PIN_LEFT_LPWM,
                                 PIN_LEFT_REN,   PIN_LEFT_LEN,
@@ -33,6 +55,7 @@ static L298Driver driveRight(PIN_RIGHT_IN3, PIN_RIGHT_IN4, PIN_RIGHT_ENB,
 static BTS7960Driver weapon(PIN_WEAPON_RPWM, PIN_WEAPON_LPWM,
                             PIN_WEAPON_REN,  PIN_WEAPON_LEN,
                             4, 5, WEAPON_PWM_FREQ, WEAPON_PWM_BITS);
+#endif
 
 // ---------------- State ----------------
 static WiFiUDP      udp;
@@ -118,6 +141,9 @@ void setup() {
     // never glitches the motors.
     pinMode(PIN_LED_STATUS, OUTPUT);
     digitalWrite(PIN_LED_STATUS, LOW);
+#if DRIVE_DRIVER == DRIVER_SHIELD
+    shieldReg.begin();
+#endif
     driveLeft.begin();
     driveRight.begin();
     weapon.begin();

@@ -33,7 +33,32 @@
 // (0/2/12/15), no flash pins (6-11), no input-only pins (34-39).
 #define DRIVER_L298N     1   // IN1/IN2 + ENA(PWM) per motor (legacy mapping)
 #define DRIVER_BTS7960   2   // two PWM inputs per motor (+ optional EN pins)
-#define DRIVE_DRIVER     DRIVER_BTS7960
+#define DRIVER_SHIELD    3   // L293D Motor Shield v1 (74HC595 dir + PWM/motor)
+#define DRIVE_DRIVER     DRIVER_SHIELD
+
+// ---- L293D Motor Shield v1 (Adafruit clone) wiring: shield pin -> ESP32 ----
+#define SHIELD_PIN_DIR_SER    23   // shield D12 (74HC595 data)
+#define SHIELD_PIN_DIR_CLK    18   // shield D4  (74HC595 clock)
+#define SHIELD_PIN_DIR_LATCH  19   // shield D8  (74HC595 latch)
+#define SHIELD_PIN_DIR_EN     -1   // shield D7  -> tie to GND (or give it a GPIO)
+#define SHIELD_PIN_PWM_M1     25   // shield D11
+#define SHIELD_PIN_PWM_M2     26   // shield D3
+#define SHIELD_PIN_PWM_M3     33   // shield D6
+#define SHIELD_PIN_PWM_M4     32   // shield D5
+// 74HC595 bit numbers per motor (AFMotor convention): A = fwd, B = rev
+#define SHIELD_M1_A 2
+#define SHIELD_M1_B 3
+#define SHIELD_M2_A 1
+#define SHIELD_M2_B 4
+#define SHIELD_M3_A 5
+#define SHIELD_M3_B 7
+#define SHIELD_M4_A 0
+#define SHIELD_M4_B 6
+// Which shield channel drives what
+#define SHIELD_LEFT_MOTOR    1    // M1
+#define SHIELD_RIGHT_MOTOR   4    // M4
+#define SHIELD_WEAPON_MOTOR  2    // M2 (hammer) — change to 3 if wired to M3
+#define SHIELD_PWM_FREQ      5000 // L293D is slow; keep PWM modest
 
 // Driver CH1 — left wheel
 #define PIN_LEFT_RPWM    25   // -> CH1 IN1 (forward)

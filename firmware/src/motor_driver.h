@@ -60,4 +60,37 @@ private:
     PwmOut   pwmR_, pwmL_;
 };
 
+// L293D "Motor Shield v1" (Adafruit clone): directions via a 74HC595 shift
+// register (DATA/CLK/LATCH, EN held LOW), speed via one PWM pin per motor.
+// Bit numbers follow the Adafruit AFMotor library.
+class ShieldRegister {
+public:
+    ShieldRegister(uint8_t data, uint8_t clk, uint8_t latch, uint8_t en)
+        : data_(data), clk_(clk), latch_(latch), en_(en) {}
+    void begin();
+    void setBits(uint8_t bitA, uint8_t bitB, bool a, bool b);
+    void clear();
+private:
+    void flush();
+    uint8_t data_, clk_, latch_, en_;
+    uint8_t state_ = 0;
+};
+
+class ShieldMotor : public IMotorDriver {
+public:
+    ShieldMotor(ShieldRegister& reg, uint8_t bitA, uint8_t bitB,
+                uint8_t pwmPin, uint8_t pwmChannel, uint32_t freq, uint8_t bits)
+        : reg_(reg), bitA_(bitA), bitB_(bitB), pwmPin_(pwmPin),
+          ch_(pwmChannel), freq_(freq), bits_(bits) {}
+    void begin() override;
+    void setSpeed(int16_t v) override;
+    void stop() override;
+private:
+    ShieldRegister& reg_;
+    uint8_t bitA_, bitB_, pwmPin_, ch_;
+    uint32_t freq_;
+    uint8_t  bits_;
+    PwmOut   pwm_;
+};
+
 #endif // ARDUINO

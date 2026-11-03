@@ -79,4 +79,58 @@ void BTS7960Driver::stop() {
     pwmL_.write(0);
 }
 
+
+// ---------------- L293D shield (74HC595) ----------------
+
+void ShieldRegister::begin() {
+    pinMode(data_, OUTPUT);
+    pinMode(clk_, OUTPUT);
+    pinMode(latch_, OUTPUT);
+    if (en_ != 0xFF) { pinMode(en_, OUTPUT); digitalWrite(en_, LOW); }
+    state_ = 0;
+    flush();
+}
+
+void ShieldRegister::setBits(uint8_t bitA, uint8_t bitB, bool a, bool b) {
+    uint8_t s = state_;
+    if (a) s |= (1u << bitA); else s &= ~(1u << bitA);
+    if (b) s |= (1u << bitB); else s &= ~(1u << bitB);
+    if (s == state_) return;
+    state_ = s;
+    flush();
+}
+
+void ShieldRegister::clear() {
+    state_ = 0;
+    flush();
+}
+
+void ShieldRegister::flush() {
+    digitalWrite(latch_, LOW);
+    shiftOut(data_, clk_, MSBFIRST, state_);
+    digitalWrite(latch_, HIGH);
+}
+
+void ShieldMotor::begin() {
+    reg_.setBits(bitA_, bitB_, false, false);
+    pwm_.attach(pwmPin_, ch_, freq_, bits_);
+}
+
+void ShieldMotor::setSpeed(int16_t v) {
+    if (v > 0) {
+        reg_.setBits(bitA_, bitB_, true, false);
+    } else if (v < 0) {
+        reg_.setBits(bitA_, bitB_, false, true);
+        v = (int16_t)-v;
+    } else {
+        reg_.setBits(bitA_, bitB_, false, false);
+    }
+    pwm_.write((uint32_t)v * pwm_.maxDuty() / 1000u);
+}
+
+void ShieldMotor::stop() {
+    pwm_.write(0);
+    reg_.setBits(bitA_, bitB_, false, false);
+}
+
 #endif // ARDUINO
