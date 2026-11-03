@@ -11,6 +11,7 @@
 #define WIFI_PASSWORD    "combact123"   // WPA2, min 8 chars — change before the event
 #define WIFI_CHANNEL     6              // 1, 6 or 11; pick the least crowded at the venue
 #define WIFI_HIDDEN      0
+#define DEBUG_RX         1              // 1 Hz serial log of incoming UDP
 #define UDP_PORT         4210           // control in + telemetry out on one port
 
 // ---------------- Timing ----------------
@@ -37,9 +38,9 @@
 #define DRIVE_DRIVER     DRIVER_SHIELD
 
 // ---- L293D Motor Shield v1 (Adafruit clone) wiring: shield pin -> ESP32 ----
-#define SHIELD_PIN_DIR_SER    23   // shield D12 (74HC595 data)
+#define SHIELD_PIN_DIR_SER    19   // shield D8  (74HC595 data,  AFMotor MOTORDATA)
 #define SHIELD_PIN_DIR_CLK    18   // shield D4  (74HC595 clock)
-#define SHIELD_PIN_DIR_LATCH  19   // shield D8  (74HC595 latch)
+#define SHIELD_PIN_DIR_LATCH  23   // shield D12 (74HC595 latch, AFMotor MOTORLATCH)
 #define SHIELD_PIN_DIR_EN     -1   // shield D7  -> tie to GND (or give it a GPIO)
 #define SHIELD_PIN_PWM_M1     25   // shield D11
 #define SHIELD_PIN_PWM_M2     26   // shield D3

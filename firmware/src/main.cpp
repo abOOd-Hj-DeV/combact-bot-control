@@ -108,6 +108,15 @@ static void applyCommand(const proto::RcPacket& p) {
                                     DRIVE_DEADBAND);
     driveLeft.setSpeed(d.left);
     driveRight.setSpeed(d.right);
+#if DEBUG_RX
+    static uint32_t dbgCmd = 0;
+    if (millis() - dbgCmd > 1000) {
+        dbgCmd = millis();
+        Serial.printf("cmd thr=%d str=%d -> L=%d R=%d flags=0x%02x ham=%d\n",
+                      p.ch[proto::CH_THROTTLE], p.ch[proto::CH_STEER],
+                      d.left, d.right, p.flags, p.ch[proto::CH_HAMMER]);
+    }
+#endif
 
     armed = (p.flags & proto::FLAG_ARMED) != 0;
 #if WEAPON_SINGLE_DIRECTION
@@ -181,6 +190,16 @@ void loop() {
         static uint8_t buf[64];
         int r = udp.read(buf, sizeof(buf));
         proto::RcPacket p;
+#if DEBUG_RX
+        static uint32_t dbgLast = 0;
+        if (now - dbgLast > 1000) {
+            dbgLast = now;
+            Serial.printf("rx len=%d from %s:%u ok=%d\n", r,
+                          udp.remoteIP().toString().c_str(), udp.remotePort(),
+                          (int)(r == (int)proto::kRcPacketSize &&
+                                proto::decodeRc(buf, (size_t)r, p)));
+        }
+#endif
         if (r == (int)proto::kRcPacketSize &&
             proto::decodeRc(buf, (size_t)r, p) &&
             linkStats.accept(p.seq)) {
