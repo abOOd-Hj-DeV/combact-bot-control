@@ -35,7 +35,14 @@
 #define DRIVER_L298N     1   // IN1/IN2 + ENA(PWM) per motor (legacy mapping)
 #define DRIVER_BTS7960   2   // two PWM inputs per motor (+ optional EN pins)
 #define DRIVER_SHIELD    3   // L293D Motor Shield v1 (74HC595 dir + PWM/motor)
-#define DRIVE_DRIVER     DRIVER_SHIELD
+#define DRIVER_UART      4   // Arduino UNO + Motor Shield bridge over Serial2 (firmware/uno_bridge)
+#define DRIVE_DRIVER     DRIVER_UART
+
+// ---- UART bridge: ESP32 GPIO17 (TX) -> UNO pin 0 (RX), common GND ----
+#define UART_BRIDGE_TX_PIN   17
+#define UART_BRIDGE_RX_PIN   16   // unused, left free
+#define UART_BRIDGE_BAUD     115200
+#define UART_BRIDGE_PERIOD_MS 20  // frame rate when nothing changes (keeps UNO failsafe fed)
 
 // ---- L293D Motor Shield v1 (Adafruit clone) wiring: shield pin -> ESP32 ----
 #define SHIELD_PIN_DIR_SER    19   // shield D8  (74HC595 data,  AFMotor MOTORDATA)

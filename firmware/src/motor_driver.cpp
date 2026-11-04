@@ -134,3 +134,31 @@ void ShieldMotor::stop() {
 }
 
 #endif // ARDUINO
+
+// ---------------- UART bridge ----------------
+
+void UartBridge::begin() {
+    port_.begin(baud_, SERIAL_8N1, rx_, tx_);
+    dirty_ = true;
+    send();
+}
+
+void UartBridge::set(uint8_t ch, int16_t v) {
+    if (ch > 2 || v_[ch] == v) return;
+    v_[ch] = v;
+    dirty_ = true;
+}
+
+void UartBridge::tick() {
+    if (dirty_ || millis() - last_ >= period_) send();
+}
+
+void UartBridge::send() {
+    char body[32];
+    int n = snprintf(body, sizeof(body), "%d,%d,%d", v_[0], v_[1], v_[2]);
+    uint8_t x = 0;
+    for (int i = 0; i < n; i++) x ^= (uint8_t)body[i];
+    port_.printf("M%s*%02X\n", body, x);
+    dirty_ = false;
+    last_ = millis();
+}

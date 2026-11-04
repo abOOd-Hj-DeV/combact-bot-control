@@ -17,7 +17,13 @@
 #include "motor_driver.h"
 
 // ---------------- Drivers ----------------
-#if DRIVE_DRIVER == DRIVER_SHIELD
+#if DRIVE_DRIVER == DRIVER_UART
+static UartBridge uartBridge(Serial2, UART_BRIDGE_TX_PIN, UART_BRIDGE_RX_PIN,
+                             UART_BRIDGE_BAUD, UART_BRIDGE_PERIOD_MS);
+static UartMotor driveLeft (uartBridge, 0);
+static UartMotor driveRight(uartBridge, 1);
+static UartMotor weapon    (uartBridge, 2);
+#elif DRIVE_DRIVER == DRIVER_SHIELD
 #define SHIELD_PWM_PIN_(n) SHIELD_PIN_PWM_M##n
 #define SHIELD_PWM_PIN(n)  SHIELD_PWM_PIN_(n)
 #define SHIELD_BIT_A_(n)   SHIELD_M##n##_A
@@ -150,7 +156,9 @@ void setup() {
     // never glitches the motors.
     pinMode(PIN_LED_STATUS, OUTPUT);
     digitalWrite(PIN_LED_STATUS, LOW);
-#if DRIVE_DRIVER == DRIVER_SHIELD
+#if DRIVE_DRIVER == DRIVER_UART
+    uartBridge.begin();
+#elif DRIVE_DRIVER == DRIVER_SHIELD
     shieldReg.begin();
 #endif
     driveLeft.begin();
@@ -245,4 +253,7 @@ void loop() {
         ledState = true;
         digitalWrite(PIN_LED_STATUS, HIGH);
     }
+#if DRIVE_DRIVER == DRIVER_UART
+    uartBridge.tick();
+#endif
 }

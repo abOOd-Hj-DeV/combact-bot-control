@@ -94,3 +94,34 @@ private:
 };
 
 #endif // ARDUINO
+
+// UART bridge: motor values are shipped to an Arduino UNO that owns the
+// L293D shield. Frame: M<left>,<right>,<weapon>*<xor-hex>\n at >= 50 Hz.
+class UartBridge {
+public:
+    UartBridge(HardwareSerial& port, int8_t txPin, int8_t rxPin, uint32_t baud,
+               uint32_t periodMs)
+        : port_(port), tx_(txPin), rx_(rxPin), baud_(baud), period_(periodMs) {}
+    void begin();
+    void set(uint8_t ch, int16_t v);
+    void tick();                       // call every loop()
+private:
+    void send();
+    HardwareSerial& port_;
+    int8_t  tx_, rx_;
+    uint32_t baud_, period_;
+    int16_t v_[3] = {0, 0, 0};
+    bool dirty_ = true;
+    uint32_t last_ = 0;
+};
+
+class UartMotor : public IMotorDriver {
+public:
+    UartMotor(UartBridge& b, uint8_t ch) : b_(b), ch_(ch) {}
+    void begin() override {}
+    void setSpeed(int16_t v) override { b_.set(ch_, v); }
+    void stop() override { b_.set(ch_, 0); }
+private:
+    UartBridge& b_;
+    uint8_t ch_;
+};
