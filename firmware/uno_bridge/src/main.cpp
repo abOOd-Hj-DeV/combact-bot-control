@@ -15,6 +15,8 @@ const uint8_t BIT_A[5] = {0, 2, 1, 5, 0};         // AFMotor MOTORn_A bits
 const uint8_t BIT_B[5] = {0, 3, 4, 7, 6};         // AFMotor MOTORn_B bits
 const int LEFT = 1, RIGHT = 4, WEAPON = 2;
 const unsigned long FAILSAFE_MS = 300;
+const int HAMMER_RELAY = A1;                      // optional relay module IN
+const int HAMMER_RELAY_ACTIVE = HIGH;             // LOW for active-low modules
 const int LINK_RX = 2, LINK_TX = A5;              // A5 unused: TX never driven
 const long LINK_BAUD = 57600;
 SoftwareSerial link(LINK_RX, LINK_TX);
@@ -42,6 +44,7 @@ void setMotor(int m, int v) {
 }
 
 void stopAll() {
+  digitalWrite(HAMMER_RELAY, !HAMMER_RELAY_ACTIVE);
   for (int m = 1; m <= 4; m++) analogWrite(PWM_PIN[m], 0);
   regState = 0;
   flushReg();
@@ -59,6 +62,7 @@ bool parseFrame(const char* s) {
   setMotor(LEFT, l);
   setMotor(RIGHT, r);
   setMotor(WEAPON, w);
+  digitalWrite(HAMMER_RELAY, w > 0 ? HAMMER_RELAY_ACTIVE : !HAMMER_RELAY_ACTIVE);
   return true;
 }
 
@@ -69,6 +73,7 @@ void setup() {
   pinMode(EN, OUTPUT); digitalWrite(EN, LOW);
   for (int m = 1; m <= 4; m++) pinMode(PWM_PIN[m], OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(HAMMER_RELAY, OUTPUT); digitalWrite(HAMMER_RELAY, !HAMMER_RELAY_ACTIVE);
   stopAll();
   Serial.println(F("bridge ready"));
 }
