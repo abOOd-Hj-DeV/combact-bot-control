@@ -1,6 +1,8 @@
 #include <Arduino.h>
+#include <SoftwareSerial.h>
 // Combact-bot motor bridge: Arduino UNO + L293D Motor Shield v1.
-// The ESP32 (Wi-Fi brain) sends one ASCII frame per 20 ms on the UNO's RX:
+// The ESP32 (Wi-Fi brain) sends one ASCII frame per 20 ms into UNO pin 2
+// (SoftwareSerial RX, 57600 baud; pin 0 is hidden under the shield):
 //     M<left>,<right>,<weapon>*<xx>\n     values -1000..1000, xx = XOR of
 //                                         every byte between 'M' and '*', hex
 // If no valid frame arrives for FAILSAFE_MS every motor is stopped.
@@ -13,6 +15,9 @@ const uint8_t BIT_A[5] = {0, 2, 1, 5, 0};         // AFMotor MOTORn_A bits
 const uint8_t BIT_B[5] = {0, 3, 4, 7, 6};         // AFMotor MOTORn_B bits
 const int LEFT = 1, RIGHT = 4, WEAPON = 2;
 const unsigned long FAILSAFE_MS = 300;
+const int LINK_RX = 2, LINK_TX = A5;              // A5 unused: TX never driven
+const long LINK_BAUD = 57600;
+SoftwareSerial link(LINK_RX, LINK_TX);
 
 uint8_t regState = 0;
 char line[40];
@@ -59,6 +64,7 @@ bool parseFrame(const char* s) {
 
 void setup() {
   Serial.begin(115200);
+  link.begin(LINK_BAUD);
   pinMode(LATCH, OUTPUT); pinMode(CLK, OUTPUT); pinMode(SER, OUTPUT);
   pinMode(EN, OUTPUT); digitalWrite(EN, LOW);
   for (int m = 1; m <= 4; m++) pinMode(PWM_PIN[m], OUTPUT);
@@ -68,8 +74,8 @@ void setup() {
 }
 
 void loop() {
-  while (Serial.available()) {
-    char c = (char)Serial.read();
+  while (link.available()) {
+    char c = (char)link.read();
     if (c == '\n' || c == '\r') {
       line[lineLen] = 0;
       if (lineLen && parseFrame(line)) { lastFrame = millis(); linked = true; }

@@ -38,10 +38,10 @@
 #define DRIVER_UART      4   // Arduino UNO + Motor Shield bridge over Serial2 (firmware/uno_bridge)
 #define DRIVE_DRIVER     DRIVER_UART
 
-// ---- UART bridge: ESP32 GPIO17 (TX) -> UNO pin 0 (RX), common GND ----
+// ---- UART bridge: ESP32 GPIO17 (TX) -> UNO pin 2 (SoftwareSerial RX), common GND ----
 #define UART_BRIDGE_TX_PIN   17
 #define UART_BRIDGE_RX_PIN   16   // unused, left free
-#define UART_BRIDGE_BAUD     115200
+#define UART_BRIDGE_BAUD     57600
 #define UART_BRIDGE_PERIOD_MS 20  // frame rate when nothing changes (keeps UNO failsafe fed)
 
 // ---- L293D Motor Shield v1 (Adafruit clone) wiring: shield pin -> ESP32 ----
