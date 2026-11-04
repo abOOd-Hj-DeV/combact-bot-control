@@ -38,7 +38,7 @@ L293D يتحمل 0.6A مستمر / 1.2A ذروة للقناة. محرك المط
 | COM (البرغي الأوسط) | بطارية (+) |
 | NO | طرف المحرك (+) — الطرف الآخر إلى بطارية (−) |
 
-- الكود يفترض الموديول **active‑HIGH** (A1 = HIGH يشغّل). إن كان active‑LOW (ينقر عند لمس IN بـ Gnd) غيّر `HAMMER_RELAY_ACTIVE` في `uno_bridge/src/main.cpp`.
+- الموديول المستعمل **active‑LOW** (A1 = LOW يشغّل؛ `HAMMER_RELAY_ACTIVE = LOW` في `uno_bridge/src/main.cpp`). لموديول active‑HIGH غيّرها إلى HIGH.
 - إن دار المحرك بلا FIRE فقد وصلت NC بدل NO.
 
 ## 4) الطاقة (بدون USB)

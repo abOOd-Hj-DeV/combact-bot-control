@@ -16,7 +16,7 @@ const uint8_t BIT_B[5] = {0, 3, 4, 7, 6};         // AFMotor MOTORn_B bits
 const int LEFT = 1, RIGHT = 4, WEAPON = 2;
 const unsigned long FAILSAFE_MS = 300;
 const int HAMMER_RELAY = A1;                      // optional relay module IN
-const int HAMMER_RELAY_ACTIVE = HIGH;             // LOW for active-low modules
+const int HAMMER_RELAY_ACTIVE = LOW;              // his SRD-05VDC module triggers on LOW
 const int LINK_RX = 2, LINK_TX = A5;              // A5 unused: TX never driven
 const long LINK_BAUD = 57600;
 SoftwareSerial link(LINK_RX, LINK_TX);
