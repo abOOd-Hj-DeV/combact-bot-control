@@ -17,6 +17,20 @@ const int LEFT = 1, RIGHT = 4, WEAPON = 2;
 const unsigned long FAILSAFE_MS = 300;
 const int LINK_RX = 2, LINK_TX = A5;              // A5 unused: TX never driven
 const long LINK_BAUD = 57600;
+
+// Hammer = cam driven by WEAPON motor. One FIRE press runs the cam one full
+// turn (strike + re-cock) and stops cocked. A very short tap only nudges the
+// cam so the rest position can be aligned by hand. No sensor: times below
+// are calibrated by trial for this robot's cam + battery.
+const unsigned long HAMMER_CYCLE_MS = 1200;  // one full cam revolution
+const unsigned long HAMMER_NUDGE_MS = 60;    // tiny step for manual alignment
+const unsigned long HAMMER_TAP_MS   = 200;   // press shorter than this = nudge
+const int HAMMER_POWER = 1000;               // cam always runs forward, full power
+
+enum HammerState { H_IDLE, H_PRESSED, H_RUNNING };
+HammerState hState = H_IDLE;
+unsigned long hPressAt = 0, hRunUntil = 0;
+bool hPrevPressed = false;
 SoftwareSerial link(LINK_RX, LINK_TX);
 
 uint8_t regState = 0;
@@ -47,6 +61,38 @@ void stopAll() {
   flushReg();
 }
 
+void hammerRun(unsigned long ms) {
+  hState = H_RUNNING;
+  hRunUntil = millis() + ms;
+  setMotor(WEAPON, HAMMER_POWER);
+}
+
+void hammerInput(bool pressed) {
+  unsigned long now = millis();
+  bool rising = pressed && !hPrevPressed;
+  bool falling = !pressed && hPrevPressed;
+  hPrevPressed = pressed;
+  switch (hState) {
+    case H_IDLE:
+      if (rising) { hState = H_PRESSED; hPressAt = now; }
+      break;
+    case H_PRESSED:
+      if (falling)                              hammerRun(HAMMER_NUDGE_MS);
+      else if (now - hPressAt >= HAMMER_TAP_MS) hammerRun(HAMMER_CYCLE_MS);
+      break;
+    case H_RUNNING:
+      break;                                    // ignore input until the cycle ends
+  }
+}
+
+void hammerTick() {
+  if (hState == H_RUNNING && (long)(millis() - hRunUntil) >= 0) {
+    setMotor(WEAPON, 0);
+    hState = hPrevPressed ? H_RUNNING : H_IDLE;   // wait for release before re-arming
+    if (hPrevPressed) hRunUntil = millis();       // stays RUNNING (motor off) until released
+  }
+}
+
 bool parseFrame(const char* s) {
   if (s[0] != 'M') return false;
   const char* star = strchr(s, '*');
@@ -58,7 +104,7 @@ bool parseFrame(const char* s) {
   if (sscanf(s + 1, "%d,%d,%d", &l, &r, &w) != 3) return false;
   setMotor(LEFT, l);
   setMotor(RIGHT, r);
-  setMotor(WEAPON, w);
+  hammerInput(w > 0);
   return true;
 }
 
@@ -86,9 +132,12 @@ void loop() {
       lineLen = 0;                                  // garbage: resync
     }
   }
+  hammerTick();
   if (linked && millis() - lastFrame > FAILSAFE_MS) {
     linked = false;
     stopAll();
+    hState = H_IDLE;
+    hPrevPressed = false;
   }
   digitalWrite(LED_BUILTIN, linked ? HIGH : ((millis() / 250) & 1));
 }
